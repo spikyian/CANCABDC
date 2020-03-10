@@ -20,3 +20,7 @@ Each section normally has 2 push buttons:
 Optionally a single push button can be used in toggle mode.
 
 CANCABDC firmware can be run on CANPAN hardware with the potentiometer connected to PIC pin 7.
+
+The CANCABDC panels communicate between themselves using CBUS. CBUS is also used to 
+communicate speed information to CAN4DC modules. The CAN4DC modules convert the 
+speed information to a PWM signal for the DC motors.
