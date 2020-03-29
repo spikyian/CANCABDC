@@ -53,7 +53,7 @@ extern BOOL	thisNN( BYTE *rx_ptr);
 
 static TickValue startWait;
 
-void mioEventsInit(void) {
+void cabdcEventsInit(void) {
     startWait.Val = 0;
 }
 

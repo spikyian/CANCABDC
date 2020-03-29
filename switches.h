@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
     extern void initSwitches(void);
-    extern void pollSwitches(void);
+    extern void pollSwitches(unsigned char callback);
     
     extern unsigned char switch_matrix[8];
 

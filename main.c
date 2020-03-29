@@ -130,6 +130,7 @@
 #include "potentiometer.h"
 #include "switches.h"
 #include "leds.h"
+#include "tests.h"
 
 #ifdef NV_CACHE
 #include "nvCache.h"
@@ -151,7 +152,7 @@ void factoryResetGlobalNv(void);
 BOOL sendProducedEvent(unsigned char action, BOOL on);
 void factoryResetEE(void);
 void factoryResetFlash(void);
-void test(void);
+
 
 #ifdef __18CXX
 void high_irq_errata_fix(void);
@@ -202,11 +203,11 @@ void LOW_INT_VECT(void)
 }
 #endif
 
-static TickValue   lastSwitchPollTime;
-static TickValue   lastLedPollTime;
-static TickValue   lastAnaloguePollTime;
+TickValue   lastSwitchPollTime;
+TickValue   lastLedPollTime;
+TickValue   lastAnaloguePollTime;
 static TickValue   lastPotentiometerPollTime;
-static TickValue   startTime;
+TickValue   startTime;
 static BOOL        started = FALSE;
 #define ANALOGUE_PORT 4
 
@@ -227,6 +228,7 @@ void main(void) {
 #else
 int main(void) @0x800 {
 #endif
+    unsigned char rcon = RCON;
     initRomOps();
 #ifdef NV_CACHE
     // If we are using the cache make sure we get the NVs early in initialisation
@@ -241,13 +243,33 @@ int main(void) @0x800 {
     lastAnaloguePollTime.Val = startTime.Val;
     lastPotentiometerPollTime.Val = startTime.Val;
   
-    initialise(); 
-    
     // check if PB is held down during power up
     if (!FLiM_SW) {
         // test mode
-        test();
+
+        initTicker(0);  // set low priority
+        // Disable PORT B weak pullups
+        INTCON2 = 0;
+        // Disable weak pullups
+        WPUB = 0;
+
+        // set the servo state and positions before configuring IO so we reduce the startup twitch
+        initAnalogue(ANALOGUE_PORT);
+        initPotentiometer();
+        initSwitches();
+        initLeds();
+        pollSwitches(0); // read the first column of 4 switches 
+        test2();
+        if (switch_matrix[0]&0x02) {    // second button pressed
+            test2();
+        }
+        if (switch_matrix[0]&0x04) {    // third button pressed
+            test3();
+        }
+        test1();
     }
+    
+    initialise(); 
 
     while (TRUE) {
         // Startup delay for CBUS about 2 seconds to let other modules get powered up - ISR will be running so incoming packets processed
@@ -261,16 +283,16 @@ int main(void) @0x800 {
         FLiMSWCheck();  // Check FLiM switch for any mode changes
         
         if (started) {
-            if (tickTimeSince(lastSwitchPollTime) > (6 * ONE_MILI_SECOND)) {
+            if (tickTimeSince(lastAnaloguePollTime) > (6 * ONE_MILI_SECOND)) {
                 pollAnalogue(ANALOGUE_PORT);
-                lastSwitchPollTime.Val = tickGet();
+                lastAnaloguePollTime.Val = tickGet();
             }
             if (tickTimeSince(lastPotentiometerPollTime) > (19 * ONE_MILI_SECOND)) {
                 pollPotentiometer();
                 lastPotentiometerPollTime.Val = tickGet();
             }
             if (tickTimeSince(lastSwitchPollTime) > (2 * ONE_MILI_SECOND)) {
-                pollSwitches();
+                pollSwitches(1);
                 lastSwitchPollTime.Val = tickGet();
             }
             if (tickTimeSince(lastLedPollTime) > (2 * ONE_MILI_SECOND)) {
@@ -320,12 +342,9 @@ void initialise(void) {
     // Disable weak pullups
     WPUB = 0;
 
-    mioEventsInit();
-    mioFlimInit(); // This will call FLiMinit, which, in turn, calls eventsInit, cbusInit
+    cabdcEventsInit();
+    cabdcFlimInit(); // This will call FLiMinit, which, in turn, calls eventsInit, cbusInit
     
-    // default to mostly digital IO
-    ANCON0 = 0x10;  // Enable analogue port 4 (potentiometer)
-    ANCON1 = 0x00; 
     // set the servo state and positions before configuring IO so we reduce the startup twitch
     initAnalogue(ANALOGUE_PORT);
     initPotentiometer();
@@ -459,61 +478,5 @@ void ISRHigh(void) {
     void interrupt high_priority high_isr (void) {
 #endif
 
-}
-
-#define TEST_COL1       1
-#define TEST_COL2       2
-#define TEST_COL3       3
-#define TEST_COL4       4
-#define TEST_ROW1       5
-#define TEST_ROW2       6
-#define TEST_ROW3       7
-#define TEST_ROW4       8    
-#define TEST_ROW5       9    
-#define TEST_ROW6       10    
-#define TEST_ROW7       11   
-#define TEST_ROW8       12
-#define TEST_SWITCHES   13
-#define TEST_REPEAT     24  // 10 seconds doing TEST_SWITCHES
-    
-unsigned void test(void) {
-    unsigned char testStep = 0;
-    TickValue testTime;
-    testTime.Val = startTime.Val;
-        
-    while (TRUE) {
-        if (tickTimeSince(testTime) > (ONE_SECOND)) {
-            unsigned char i;
-
-            if (testStep >= TEST_SWITCHES) {    
-                // just copy switches to leds
-                for (i=0; i<4; i++) {
-                    led_matrix[i] = switch_matrix[2*i] & 0xF | switch_matrix[2*i+1]<<4;
-                }
-                break;
-            }
-            if (testStep <= TEST_COL4) {
-                for (i=0; i<4; i++) {
-                    led_matrix[i] = 0;
-                }
-                led_matrix[testStep-TEST_COL1] = 0xff;
-            } else {
-                for (i=0; i<4; i++) {
-                    led_matrix[i] = 1 << (testStep - TEST_ROW1);
-                }
-            }
-            testStep++;
-            if (testStep >= TEST_REPEAT) testStep = 0;
-            testTime.Val = tickGet();
-        }
-        if (tickTimeSince(lastSwitchPollTime) > (2 * ONE_MILI_SECOND)) {
-            pollSwitches();
-            lastSwitchPollTime.Val = tickGet();
-        }
-        if (tickTimeSince(lastLedPollTime) > (2 * ONE_MILI_SECOND)) {
-            pollLeds();
-            lastLedPollTime.Val = tickGet();
-        }
-    }        
 }
 

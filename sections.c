@@ -72,26 +72,39 @@
 
 const Section sections[NUM_SECTIONS] = {
     {0,  1,  0,  8},  //0
-    {2,  3, 16, 24},  //1
-    {4,  5,  1,  9},  //2
-    {6,  7, 17, 25},  //3
-    {8,  9,  2, 10},  //4
-    {10,11, 18, 26}, //5
-    {12,13,  3, 11}, //6
-    {14,15, 19, 27}, //7
-    {16,17,  4, 12}, //8
-    {18,19, 20, 28}, //9
-    {20,21,  5, 13}, //10
-    {22,23, 21, 29}, //11
-    {24,25,  6, 14}, //12
-    {26,27, 22, 30}, //13
-    {28,29,  7, 15}, //14
+    {4,  5,  1,  9},  //1
+    {8,  9,  2, 10},  //2
+    {12,13,  3, 11},  //3
+    {16,17,  4, 12},  //4
+    {20,21,  5, 13}, //5
+    {24,25,  6, 14}, //6
+    {28,29,  7, 15}, //7
+    {2,  3, 16, 24}, //8
+    {6,  7, 17, 25}, //9
+    {10,11, 18, 26}, //10
+    {14,15, 19, 27}, //11
+    {18,19, 20, 28}, //12
+    {22,23, 21, 29}, //13
+    {26,27, 22, 30}, //14
     {30,31, 23, 31}  //15 
 };
 
-void switch_pressed(unsigned char sw) {
+/**
+ * A switch has changed state (pressed or released). This drives the section 
+ * control state machine.
+ * 
+ * @param sw
+ * @param state
+ */
+void switch_pressed(unsigned char sw, unsigned char state) {
     unsigned char section;
     
+    if (state == 0) {
+        // we are only interested in switch presses
+        return;
+    }
+    // loop through all the sections to work out with which section the switch
+    // is associated.
     for (section=0; section<NUM_SECTIONS; section++) {
         if (sw == sections[section].request_switch) {
             if (NV->flags & NV_FLAG_SWITCH_TOGGLE) {

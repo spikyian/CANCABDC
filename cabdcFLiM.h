@@ -48,7 +48,7 @@ extern "C" {
 
 
 // external definitions for module specific routines
-extern void mioFlimInit(void);
+extern void cabdcFlimInit(void);
 
 #ifdef	__cplusplus
 }

@@ -77,7 +77,7 @@ extern "C" {
 #define ACTION_PRODUCER_SECTION_CONTROL     2   // used for both the consumed and produced event
 #define ACTION_PRODUCER_SOD                 1
 
-extern void mioEventsInit(void);
+extern void cabdcEventsInit(void);
 extern void factoryResetGlobalEvents(void);
 extern void defaultEvents(unsigned char i, unsigned char type);
 extern void clearEvents(unsigned char i);

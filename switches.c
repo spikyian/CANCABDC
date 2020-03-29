@@ -46,7 +46,8 @@
 static unsigned char scan_column;
 unsigned char switch_matrix[8]; // lower 4 bits are used
 
-#define DEBOUNCE    4
+#define DEBOUNCE    8   // time to ignore changes after the first change
+                        // Units of 8ms so that 8 = 64ms
 unsigned char debounce[8][4];
 
 void initSwitches(void) {
@@ -59,11 +60,18 @@ void initSwitches(void) {
         debounce[i][3] = 0;
     }
     //Set up the IO ports to be able to read the switch matrix
-    TRISA = 0x7;  // RA0-RA2 are outputs
+    TRISA = 0x08;  // RA0-RA2 are outputs RA3 is PB
+
     TRISB = 0xf;    // upper 4 bits are outputs, lower 4 are inputs
+    scan_column = 0;
+    LATA = scan_column;
 }
 
-void pollSwitches(void) {
+/**
+ * Check if a switch has been pressed. Also debounces the switch.
+ * @param callback flag to indicate whether to call back into the section state machine. A function pointer would have been nice but unsupported by C18
+ */
+void pollSwitches(unsigned char callback) {
     unsigned char col;
     unsigned char diffs;
     unsigned char i;
@@ -71,6 +79,7 @@ void pollSwitches(void) {
     col = (PORTB & 0xf);
     // check if there are any changes
     diffs = col^ switch_matrix[scan_column];
+    switch_matrix[scan_column] = col;
     // go through each of the 4 col bits
     for (i=0; i<4; i++) {
         // check if we are still in a debounce period
@@ -80,14 +89,12 @@ void pollSwitches(void) {
             // check if the bit has changed
             unsigned char bit = (1<<i);
             if (diffs & bit) {
-                //change after the debounce time
+                // have a change after the debounce time since last change
                 
-                switch_matrix[scan_column] &= ~bit;
-                switch_matrix[scan_column] |= bit;
                 // set the debounce timer again
                 debounce[scan_column][i] = DEBOUNCE;
                 // call the section state machine
-                switch_pressed(i*8 + scan_column);
+                if (callback) switch_pressed(i*8 + scan_column, col & bit);
             }
         }
     }

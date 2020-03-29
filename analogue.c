@@ -42,27 +42,21 @@
 WORD lastReading;
 
 void initAnalogue(unsigned char port) {
-    ADCON1bits.VCFG = 0;
-    ADCON1bits.VNCFG = 0;
-    ADCON1bits.TRIGSEL = 0;
-    ADCON1bits.CHSN = 0;
-    ADCON2bits.ADFM = 1;    // right justified
-    ADCON2bits.ACQT = 2;    // Acquisition 4 Tad cycles
-    ADCON2bits.ADCS = 6;    // Fosc/64
+    ANCON1 = 1 << port; // make it an analogue port 
+    TRISAbits.TRISA5 = 1;   // Input
+        
+    ADCON0 = (port << 2) | 0x01; // select the inout channel and turn on ADC
+    ADCON1 = 0;
+    ADCON2 = 0x16;              // Acquisition 4 Tad cycles and Fosc/64
 
-    ADCON0bits.ADON = 1;
-
+    ADCON0bits.ADON = 1;      // turn on ADC module
     // start an ADC
-    ADCON0bits.CHS = port;
     ADCON0bits.GO = 1;
     // wait for result
     while (ADCON0bits.GO)
            ;
     // get the reading
     lastReading = ADRESH;
-    lastReading << 8;
-    lastReading |= ADRESL;
-    lastReading >> 4;
 }
 
 
@@ -72,17 +66,12 @@ void pollAnalogue(unsigned char port) {
 
     // is conversion finished?
     if ( ! ADCON0bits.GO) {
-        // get the 12 bit result
+        // get the 8 bit result
         adc = ADRESH;
-        adc = adc << 8;
-        adc |= ADRESL;
-        adc >> 4;   // convert to 8 bit
 
         //save
         lastReading = adc;
-    } else {
-        // start a conversion
-        ADCON0bits.CHS = port;
+        // start another conversion
         ADCON0bits.GO = 1;
     }
 }

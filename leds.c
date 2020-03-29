@@ -70,11 +70,13 @@ void initLeds() {
     for (i=0; i<4; i++) {
         led_matrix[i] = 0;
     }
+    TRISC = 0x80;
+    LATB = 0xF0;    // LED drivers off
+    TRISB = 0xf;    // upper 4 bits are outputs, lower 4 are inputs
     //Set up the MSSP to drive the switch matrix
     SSPCON1 = 0x22; // Enable Master and clock for Fosc/64
     SSPSTATbits.CKE = 1;
     //Set up the IO ports to be able to read the switch matrix
-    TRISB = 0xf;    // upper 4 bits are outputs, lower 4 are inputs
 }
 
 /**
@@ -82,16 +84,33 @@ void initLeds() {
  */
 void pollLeds() {
     unsigned char dummy;
-    // turn off the anode drivers
-    LATB = 0;
+    unsigned char anodes;
+    unsigned char cathodes;
     
     current_row++;
     current_row &= 0x3;
+    // turn off the cathode drivers
+    LATCbits.LATC2 = 1; // OE
     dummy = SSPBUF; // dummy read needed before next write
-    SSPCON1bits.WCOL = 0;
-    SSPBUF = led_matrix[current_row];
+    //SSPCON1bits.WCOL = 0;
+    cathodes = led_matrix[current_row];
+    SSPBUF = cathodes;
     
-    // turn the relevant anode driver back on
-    LATB = (1 << 4+current_row);
-    
+    // wait for it to have been sent
+    while (PIR1bits.SSPIF == 0)
+        ;
+    PIR1bits.SSPIF = 0; // clear the flag ready for next time
+    // latch the data
+    LATCbits.LATC4 = 1; //LE
+    LATCbits.LATC4 = 0; //LE
+    // turn the relevant anode driver on
+//if (current_row == 3) {
+//    LATB = 0xf0;
+//    LATCbits.LATC2 = 0; //OE        
+//        return;
+//}
+    anodes = ~(1 << 4+current_row);
+    LATB = anodes & 0xf0;
+    // turn the relevant cathode driver back on
+    LATCbits.LATC2 = 0; //OE
 }

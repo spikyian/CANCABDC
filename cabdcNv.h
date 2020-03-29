@@ -135,7 +135,7 @@ typedef struct {
 #define AT_NV   0xFF80                  // Where the NVs are stored. (_ROMSIZE - 128)  Size=128 bytes
 #endif
 
-extern void mioNvInit(void);
+extern void cabdcNvInit(void);
 extern unsigned int getNodeVar(unsigned int index);
 extern void setNodeVar(unsigned int index, unsigned int value);
 extern BOOL validateNV(BYTE nvIndex, BYTE oldValue, BYTE value);
