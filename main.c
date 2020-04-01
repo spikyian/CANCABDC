@@ -130,6 +130,7 @@
 #include "potentiometer.h"
 #include "switches.h"
 #include "leds.h"
+#include "sections.h"
 #include "tests.h"
 
 #ifdef NV_CACHE
@@ -229,6 +230,7 @@ void main(void) {
 int main(void) @0x800 {
 #endif
     unsigned char rcon = RCON;
+    RCON=0xbf;
     initRomOps();
 #ifdef NV_CACHE
     // If we are using the cache make sure we get the NVs early in initialisation
@@ -244,7 +246,7 @@ int main(void) @0x800 {
     lastPotentiometerPollTime.Val = startTime.Val;
   
     // check if PB is held down during power up
-    if (!FLiM_SW) {
+    if ( FLiM_SW) {
         // test mode
 
         initTicker(0);  // set low priority
@@ -258,8 +260,13 @@ int main(void) @0x800 {
         initPotentiometer();
         initSwitches();
         initLeds();
+            // Enable interrupt priority
+        RCONbits.IPEN = 1;
+        // enable interrupts, all init now done
+//!        ei(); // don't know why but enabling HP interrupt causes reset every 1 sec approx
+        INTCONbits.GIEL = 1;
+    
         pollSwitches(0); // read the first column of 4 switches 
-        test2();
         if (switch_matrix[0]&0x02) {    // second button pressed
             test2();
         }
@@ -279,7 +286,7 @@ int main(void) @0x800 {
                 sendProducedEvent(ACTION_PRODUCER_SOD, TRUE);
             }
         }
-        checkCBUS();    // Consume any CBUS message and act upon it
+//!        checkCBUS();    // Consume any CBUS message and act upon it
         FLiMSWCheck();  // Check FLiM switch for any mode changes
         
         if (started) {
@@ -287,10 +294,10 @@ int main(void) @0x800 {
                 pollAnalogue(ANALOGUE_PORT);
                 lastAnaloguePollTime.Val = tickGet();
             }
-            if (tickTimeSince(lastPotentiometerPollTime) > (19 * ONE_MILI_SECOND)) {
-                pollPotentiometer();
-                lastPotentiometerPollTime.Val = tickGet();
-            }
+//!            if (tickTimeSince(lastPotentiometerPollTime) > (19 * ONE_MILI_SECOND)) {
+//!                pollPotentiometer();
+//!                lastPotentiometerPollTime.Val = tickGet();
+//!            }
             if (tickTimeSince(lastSwitchPollTime) > (2 * ONE_MILI_SECOND)) {
                 pollSwitches(1);
                 lastSwitchPollTime.Val = tickGet();
@@ -350,6 +357,7 @@ void initialise(void) {
     initPotentiometer();
     initSwitches();
     initLeds();
+    initSections();
 
     /*
      * Now configure the interrupts.
@@ -360,7 +368,8 @@ void initialise(void) {
     // Enable interrupt priority
     RCONbits.IPEN = 1;
     // enable interrupts, all init now done
-    ei(); 
+    //ei(); // don't know why but enabling HP interrupt causes reset every 1 sec approx
+    INTCONbits.GIEL = 1;
 }
 
 /**

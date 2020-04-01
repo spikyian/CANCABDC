@@ -91,24 +91,21 @@ void pollLeds() {
     current_row &= 0x3;
     // turn off the cathode drivers
     LATCbits.LATC2 = 1; // OE
+    
+    PIR1bits.SSPIF = 0; // clear the flag ready for next time
     dummy = SSPBUF; // dummy read needed before next write
     //SSPCON1bits.WCOL = 0;
     cathodes = led_matrix[current_row];
     SSPBUF = cathodes;
     
-    // wait for it to have been sent
+//    // wait for data to be sent
     while (PIR1bits.SSPIF == 0)
         ;
-    PIR1bits.SSPIF = 0; // clear the flag ready for next time
+//    PIR1bits.SSPIF = 0; // clear the flag ready for next time
     // latch the data
     LATCbits.LATC4 = 1; //LE
     LATCbits.LATC4 = 0; //LE
     // turn the relevant anode driver on
-//if (current_row == 3) {
-//    LATB = 0xf0;
-//    LATCbits.LATC2 = 0; //OE        
-//        return;
-//}
     anodes = ~(1 << 4+current_row);
     LATB = anodes & 0xf0;
     // turn the relevant cathode driver back on

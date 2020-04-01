@@ -56,7 +56,8 @@ to +5V and 0V wires of the ribbon cable.
 |led   |19        | 9 | 10| 11| 12| 13| 14| 15| 16| 21| 25| 26| 27| 28| 29| 30| 31| 32|
 |      |column pin| 9 | 10| 11| 12| 25| 24| 23| 22|   | 9 | 10| 11| 12| 25| 24| 23| 22|
 
-##Test mode
+
+## Test mode
 
 If the FLiM push button is held down during power up the module enters a test mode to allow
 wiring to be checked.

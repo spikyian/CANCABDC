@@ -45,8 +45,9 @@ struct Section {
 };
 typedef struct Section Section;
 
-extern const Section sections[NUM_SECTIONS];
+extern Section sections[NUM_SECTIONS];
 
+extern void initSections(void);
 extern void switch_pressed(unsigned char sw, unsigned char state);
 extern void requestControl(unsigned char section);
 extern void releaseControl(unsigned char section);

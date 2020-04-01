@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+    #define NUM_SWITCHES 32
     extern void initSwitches(void);
     extern void pollSwitches(unsigned char callback);
     

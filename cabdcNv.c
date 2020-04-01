@@ -109,7 +109,7 @@ void factoryResetGlobalNv(void) {
     writeFlashByte((BYTE*)(AT_NV + NV_POT_END_LEVEL), (BYTE)127);
     writeFlashByte((BYTE*)(AT_NV + NV_ACCELERATION), (BYTE)1);
     writeFlashByte((BYTE*)(AT_NV + NV_FREQUENCY), (BYTE)1);
-    writeFlashByte((BYTE*)(AT_NV + NV_FLAGS), (BYTE)(NV_FLAG_MASTER_PANEL | NV_FLAG_STOP_ON_RELEASE));
+    writeFlashByte((BYTE*)(AT_NV + NV_FLAGS), (BYTE)(NV_FLAG_MASTER_PANEL | NV_FLAG_STOP_ON_RELEASE | NV_FLAG_SWITCH_TOGGLE));
     
     // Now reset the per section NVs
     for (i=0; i< NUM_SECTIONS; i++) {
