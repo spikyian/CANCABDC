@@ -55,7 +55,7 @@
 
     // The config values are pasted in to this source file after using the <Window->PIC memory 
     // views->Configuration Bits> menu entry in MPLABX
-    // 16MHz HS1 and x4 PLL
+    // 4MHz HS1 and x4 PLL
 
 #ifdef CPUF18K
 /*   #pragma config FOSC=HS1, PLLCFG=ON, FCMEN=OFF, IESO=OFF, SOSCSEL = DIG   
@@ -85,7 +85,7 @@
 
 // CONFIG1H
 #pragma config FOSC = HS1       // Oscillator (HS oscillator (Medium power, 4 MHz - 16 MHz))
-#pragma config PLLCFG = ON      // PLL x4 Enable bit (Enabled to give 16MHz clock)
+#pragma config PLLCFG = OFF      // PLL x4 Enable bit (Disabled to give 4MHz clock)
 #pragma config FCMEN = OFF      // Fail-Safe Clock Monitor (Disabled)
 #pragma config IESO = OFF       // Internal External Oscillator Switch Over Mode (Disabled)
 
@@ -100,7 +100,7 @@
 #pragma config WDTPS = 1048576      // Watchdog Postscaler (1:1048576)
 
 // CONFIG3H
-#pragma config CANMX = PORTC    // ECAN Mux bit (ECAN TX and RX pins are located on RB2 and RB3, respectively)
+#pragma config CANMX = PORTC    // ECAN Mux bit (ECAN TX and RX pins are located on RC6 and RC7, respectively)
 #pragma config MSSPMSK = MSK7   // MSSP address masking (7 Bit address masking mode)
 #pragma config MCLRE = ON       // Master Clear Enable (MCLR Enabled, RE3 Disabled)
 

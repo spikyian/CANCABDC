@@ -73,7 +73,7 @@ extern "C" {
 
 #define MANU_ID         MANU_MERG
 #define MODULE_ID       MTYP_CANCAB // XXX
-#define MODULE_TYPE     "DCCAB "       // MUST be at least 7 character long. First 7 are used.
+#define MODULE_TYPE     "CABDC  "       // MUST be at least 7 character long. First 7 are used.
 #define MODULE_FLAGS    PF_COMBI+PF_BOOT+PF_COE  // Producer, consumer, boot
 #define BUS_TYPE        PB_CAN
 #define LOAD_ADDRESS    0x0800      // Need to put in parameter block at compile time, only known to linker so hard code here
@@ -83,8 +83,8 @@ extern "C" {
 // Time delays 
 #define CBUS_START_DELAY    TWO_SECOND
     
-#define CONSUMER_ACTION_T   unsigned char
-#define PRODUCER_ACTION_T   unsigned char
+#define ACTION_T   unsigned char
+#define HAPPENING_T   unsigned char
 
 #ifdef	__cplusplus
 }

@@ -79,7 +79,7 @@ static unsigned char switch2Section[NUM_SWITCHES];
  */
 void initSections(void) {
     unsigned char i;
-    
+/*   
     sections[0].request_switch = 0;
     sections[0].release_switch = 16;
     sections[0].controlled_led = 0;
@@ -159,10 +159,14 @@ void initSections(void) {
     sections[15].release_switch = 31;
     sections[15].controlled_led = 23;
     sections[15].haveControl_led = 31;
-
+*/
       
     // fill in the switch2Section lookup table
     for (i=0; i<NUM_SECTIONS; i++){
+        sections[i].request_switch = i;
+        sections[i].release_switch = (i+16);
+        sections[i].controlled_led = i+(i/8)*8;
+        sections[i].haveControl_led = 8+i+(i/8)*8;
         switch2Section[sections[i].request_switch] = i;
         switch2Section[sections[i].release_switch] = i;
     }
@@ -223,13 +227,13 @@ void switch_pressed(unsigned char sw, unsigned char state) {
 
 void requestControl(unsigned char section) {
     // Tell other panels we are taking control  
-    cbusMsg[d5] = NV->sections[section].nv_section_nn.section_nn_bytes.section_nn_h;
-    cbusMsg[d6] = NV->sections[section].nv_section_nn.section_nn_bytes.section_nn_l;
-    cbusMsg[d7] = NV->sections[section].nv_section_en.section_en_bytes.section_en_l;
-//!    if (getProducedEvent(ACTION_PRODUCER_SECTION_CONTROL)) {
-//!        // This should be a ASON3
-//!        cbusSendEventWithData( CBUS_OVER_CAN, 0, producedEvent.EN, 1, cbusMsg, 3);
-//!    }
+    cbusMsg[d5] = NV->sections[section].section_nn_bytes.section_nn_h;
+    cbusMsg[d6] = NV->sections[section].section_nn_bytes.section_nn_l;
+    cbusMsg[d7] = NV->sections[section].section_en_bytes.section_en_l;
+    if (getProducedEvent(HAPPENING_SECTION_CONTROL)) {
+        // This should be a ASON3
+        cbusSendEventWithData( CBUS_OVER_CAN, 0, producedEvent.EN, 1, cbusMsg, 3);
+    }
     
     setLed(sections[section].controlled_led);
     setLed(sections[section].haveControl_led);
@@ -242,13 +246,13 @@ void releaseControl(unsigned char section) {
 //!        setSpeed(section, 0);
     }
     // Tell other panels we have released control  
-    cbusMsg[d5] = NV->sections[section].nv_section_nn.section_nn_bytes.section_nn_h;
-    cbusMsg[d6] = NV->sections[section].nv_section_nn.section_nn_bytes.section_nn_l;
-    cbusMsg[d7] = NV->sections[section].nv_section_en.section_en_bytes.section_en_l;
-//!    if (getProducedEvent(ACTION_PRODUCER_SECTION_CONTROL)) {
-//!        // This should be a ASOF3
-//!        cbusSendEventWithData( CBUS_OVER_CAN, 0, producedEvent.EN, 0, cbusMsg, 3);
-//!    }
+    cbusMsg[d5] = NV->sections[section].section_nn_bytes.section_nn_h;
+    cbusMsg[d6] = NV->sections[section].section_nn_bytes.section_nn_l;
+    cbusMsg[d7] = NV->sections[section].section_en_bytes.section_en_l;
+    if (getProducedEvent(HAPPENING_SECTION_CONTROL)) {
+        // This should be a ASOF3
+        cbusSendEventWithData( CBUS_OVER_CAN, 0, producedEvent.EN, 0, cbusMsg, 3);
+    }
 }
 
 unsigned char haveControl(unsigned char section) {
@@ -281,18 +285,18 @@ void receivedControlMessage(unsigned char * rx_ptr) {
     
     // look for this section in the NVs
     for (section = 0; section <NUM_SECTIONS; section++) {
-//!        if (NV->sections[section].nv_section_nn.section_nn_bytes.section_nn_h != nnh) continue;
-//!        if (NV->sections[section].nv_section_nn.section_nn_bytes.section_nn_l != nnl) continue;
-//!        if (NV->sections[section].nv_section_en.section_en_bytes.section_en_h != enh) continue;
-//!        if (NV->sections[section].nv_section_en.section_en_bytes.section_en_l != enl) continue;
+        if (NV->sections[section].section_nn_bytes.section_nn_h != nnh) continue;
+        if (NV->sections[section].section_nn_bytes.section_nn_l != nnl) continue;
+        if (NV->sections[section].section_en_bytes.section_en_h != enh) continue;
+        if (NV->sections[section].section_en_bytes.section_en_l != enl) continue;
         
         // It is for one of the sections we are managing
-//!        if (opc&1) {
+        if (opc&1) {
             // OFF event
-//!            lostControlledMessage(section);
-//!        } else {
+            lostControlledMessage(section);
+        } else {
             // ON event
-//!            gotControlledMessage(section);
-//!        }
+            gotControlledMessage(section);
+        }
     }
 }

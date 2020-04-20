@@ -42,10 +42,11 @@
 WORD lastReading;
 
 void initAnalogue(unsigned char port) {
-    ANCON1 = 1 << port; // make it an analogue port 
+    ANCON0 = 1 << port; // make it an analogue port 
+    ANCON1 = 0;
     TRISAbits.TRISA5 = 1;   // Input
         
-    ADCON0 = (port << 2) | 0x01; // select the inout channel and turn on ADC
+    ADCON0 = (port << 2) | 0x01; // select the input channel and turn on ADC
     ADCON1 = 0;
     ADCON2 = 0x16;              // Acquisition 4 Tad cycles and Fosc/64
 

@@ -62,8 +62,9 @@ void cabdcEventsInit(void) {
  */
 void factoryResetGlobalEvents(void) {
     // we don't create a default SOD event
-    
-    addEvent(nodeID, DEFAULT_SECTION_EN, 1, ACTION_PRODUCER_SECTION_CONTROL, FALSE);
+    //      NN,  EN,                EV#, EVval,                  , force Own NN
+    // A short event with default EN
+    addEvent(0, DEFAULT_SECTION_EN, 0, HAPPENING_SECTION_CONTROL, FALSE);
 }
 
 
@@ -74,7 +75,7 @@ void factoryResetGlobalEvents(void) {
  * @param paction
  * @return false
  */
-BOOL getDefaultProducedEvent(PRODUCER_ACTION_T paction) {
+BOOL getDefaultProducedEvent(HAPPENING_T happening) {
     return FALSE;
 }
 

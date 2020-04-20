@@ -60,7 +60,7 @@ void initSwitches(void) {
         debounce[i][3] = 0;
     }
     //Set up the IO ports to be able to read the switch matrix
-    TRISA = 0x08;  // RA0-RA2 are outputs RA3 is PB
+    TRISA = 0x28;  // RA0-RA2 are outputs RA3 is PB
 
     TRISB = 0xf;    // upper 4 bits are outputs, lower 4 are inputs
     scan_column = 0;

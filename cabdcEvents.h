@@ -64,8 +64,8 @@ extern "C" {
  
 #include "candccab.h"
 
-#define NUM_PRODUCER_ACTIONS    2
-#define ACTION_PRODUCER_BASE    1
+#define NUM_HAPPENINGS    2
+#define HAPPENING_BASE    1
     
 #define DEFAULT_SECTION_EN  0xEA01
 /* CONSUMED actions */
@@ -74,8 +74,8 @@ extern "C" {
     
 /* PRODUCED actions */    
     // Global produced actions next
-#define ACTION_PRODUCER_SECTION_CONTROL     2   // used for both the consumed and produced event
-#define ACTION_PRODUCER_SOD                 1
+#define HAPPENING_SECTION_CONTROL     2   // used for both the consumed and produced event
+#define HAPPENING_SOD                 1
 
 extern void cabdcEventsInit(void);
 extern void factoryResetGlobalEvents(void);
@@ -91,10 +91,10 @@ extern void clearEvents(unsigned char i);
 #define EVENT_TABLE_WIDTH       1          // Width of eventTable
 #define EVperEVT                1          // Max number of EVs per event
 #ifdef __18F25K80
-#define AT_EVENTS               0x6F80      //(AT_NV - sizeof(EventTable)*NUM_EVENTS) Size=256 * 22 = 5632(0x1600) bytes
+#define AT_EVENTS               0x7F00      //(AT_NV - sizeof(EventTable)*NUM_EVENTS) Size=256 * 22 = 5632(0x1600) bytes
 #endif
 #ifdef __18F26K80
-#define AT_EVENTS               0xEF80      //(AT_NV - sizeof(EventTable)*NUM_EVENTS) Size=256 * 22 = 5632(0x1600) bytes
+#define AT_EVENTS               0xFF00      //(AT_NV - sizeof(EventTable)*NUM_EVENTS) Size=256 * 22 = 5632(0x1600) bytes
 #endif
 
 // We'll also be using configurable produced events
@@ -106,7 +106,7 @@ extern void processActions(void);
 
 #include "events.h"
 
-extern BOOL sendInvertedProducedEvent(PRODUCER_ACTION_T action, BOOL state, BOOL invert);
+extern BOOL sendInvertedProducedEvent(HAPPENING_T happening, BOOL state, BOOL invert);
 
 #ifdef	__cplusplus
 }

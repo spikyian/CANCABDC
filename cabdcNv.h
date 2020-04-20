@@ -51,7 +51,7 @@ extern "C" {
 #include "GenericTypeDefs.h"
 #include "candccab.h"
 
-#define FLASH_VERSION   0x02        // Version 2 introduced when Actions were changed to have 5 per channel
+#define FLASH_VERSION   0x01        // Version 1
     
 // Global NVs
 #define NV_VERSION                      0
@@ -95,20 +95,15 @@ extern "C" {
     
 
 typedef struct {
-    union {
-        struct {
-            unsigned char section_nn_h;
-            unsigned char section_nn_l;
-        } section_nn_bytes;
-        unsigned int section_nn;
-    } nv_section_nn;
-    union {
-        struct {
-            unsigned char section_en_h;
-            unsigned char section_en_l;
-        } section_en_bytes;
-        unsigned int section_en;
-    } nv_section_en;
+    struct {
+        unsigned char section_nn_h;
+        unsigned char section_nn_l;
+    } section_nn_bytes;
+
+    struct {
+        unsigned char section_en_h;
+        unsigned char section_en_l;
+    } section_en_bytes;
 } NvSection;
 
 /*
@@ -127,7 +122,8 @@ typedef struct {
         NvSection sections[NUM_SECTIONS];                 // config for each IO
 } ModuleNvDefs;
 
-#define NV_NUM  sizeof(ModuleNvDefs)     // Number of node variables
+#define NV_NUM  sizeof(ModuleNvDefs)    // Number of node variables
+ 
 #ifdef __18F25K80
 #define AT_NV   0x7F80                  // Where the NVs are stored. (_ROMSIZE - 128)  Size=128 bytes
 #endif

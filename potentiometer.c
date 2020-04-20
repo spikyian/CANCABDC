@@ -35,12 +35,18 @@
 #include "analogue.h"
 
 int previousReading;
+char previousSpeed;
+
+// Forward declarations
+void setSpeed(unsigned char section, char speed);
+void setAllSpeed(char speed);
 
 /**
  *  Call this after initAnalogue()
  */
 void initPotentiometer() {
     previousReading = lastReading;
+    previousSpeed = 0;
 }
 
 int abs(int a) {
@@ -77,7 +83,7 @@ int abs(int a) {
  * @param reading (8 bit)
  * @return speed (8 bit -128 to +127)
  */
-unsigned char speed(int reading) {
+char speed(int reading) {
     reading >>= 4;
     if (abs(reading) < NV->pot_dead_zone) return 0;
     
@@ -94,14 +100,20 @@ unsigned char speed(int reading) {
  * You also need to call pollAnalogue() to ensure you get a recent pot setting
  */
 void pollPotentiometer(void) {
+    char currentSpeed;
     if (previousReading != lastReading) {
         // pot has changed
         previousReading = lastReading;
-        setAllSpeed(speed(lastReading));
+        
+        currentSpeed = speed(lastReading);
+        if (previousSpeed != currentSpeed) { 
+            previousSpeed = currentSpeed;
+            setAllSpeed(currentSpeed);
+        }
     }
 }
 
-void setAllSpeed(int speed) {
+void setAllSpeed(char speed) {
     unsigned char i;
     
     for (i=0; i<NUM_SECTIONS; i++) {
@@ -116,7 +128,7 @@ void setAllSpeed(int speed) {
  * @param section
  * @param speed
  */
-void setSpeed(unsigned char section, int speed) {
+void setSpeed(unsigned char section, char speed) {
     cbusMsg[d5] = speed;
     cbusMsg[d6] = NV->acceleration;
     if (NV->frequency) {
@@ -126,8 +138,13 @@ void setSpeed(unsigned char section, int speed) {
     }
     cbusMsg[d7] = 0;
 
-    // This should be a ACON3
-    cbusSendEventWithData( CBUS_OVER_CAN, NV->sections[section].nv_section_nn.section_nn, NV->sections[section].nv_section_en.section_en, 1, cbusMsg, 3);
+    if ((NV->sections[section].section_nn_bytes.section_nn_h != 0) || (NV->sections[section].section_nn_bytes.section_nn_l != 0)) {
+        // This should be a ACON3
+        cbusSendEventWithData( CBUS_OVER_CAN, 
+                (NV->sections[section].section_nn_bytes.section_nn_h << 8) | NV->sections[section].section_nn_bytes.section_nn_l, 
+                (NV->sections[section].section_en_bytes.section_en_h << 8) | NV->sections[section].section_en_bytes.section_en_l, 
+                1, cbusMsg, 3);
+    }
 }
 
 

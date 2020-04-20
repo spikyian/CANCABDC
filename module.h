@@ -51,16 +51,12 @@ extern "C" {
 // BOOTLOADER
 #define BOOTLOADER_PRESENT
 
-// We'll be using event hash tables for fast access - at the expense of some RAM
-#define HASH_TABLE
-
-
-//Whether to support ANALOGUE INPUTS
-#define ANALOGUE
+// We won't be using event hash tables for fast access - at the expense of some RAM
+//#define HASH_TABLE
 
     
 // enable this for additional validation checks
-//#define SAFETY
+#define SAFETY
 
 // Whether NVs are cached in RAM
 #define NV_CACHE

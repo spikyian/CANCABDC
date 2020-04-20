@@ -30,86 +30,19 @@
  * File:   main.c
  * Author: Ian Hogg
  * 
- * This is the main for the Configurable CANMIO module.
+ * This is the main for the CANCABDC module.
  * 
  * Timer usage:
  * TMR0 used in ticktime for symbol times. Used to trigger next set of servo pulses
- * TMR1 Servo outputs 0, 4, 8, 12
- * TMR2 Servo outputs 1, 5, 9, 13
- * TMR3 Servo outputs 2, 6, 10, 14
- * TMR4 Servo outputs 3, 7, 11, 15
  *
- * Created on 10 April 2017, 10:26
+ * Created on 10 March 2020, 10:26
  */
 /** TODOs
-
  * Work out what to do if all CANIDs are taken can18.c
- * Check handling of REQEV events.c
- * Consider option to set outputs on or off on powerup in addition to restore previous state
- * Heartbeat message
- * Randomise bounce
- * RFID input
- * CHECK DOCS
- *
- * 
- * DONES:
- * DONE  Flicker LED on CAN activity 
- * DONE  SERVO/Bounce/MULT invert action
- * DONE  two on produced event
- * DONE  Implement ENUM    force of self enumeration
- * DONE  Implement CANID   set canId
- * DONE  Check handling of REVAL events.c
- * DONE  Implement NNRST
- * DONE  Implement NNRSM
- * DONE  needsStarting in Pulse OUTPUT
- * DONE  Change order of Pin Configs 0-7 done. 8-15 need checking
- * DONE  Implement AREQ but doesn't handle default events
- * DONE  Fix saved events when doing SNN - not needed
- * DONE  Flash OUTPUT type
- * DONE  Implement NENRD
- * DONE  Extend ActionQueue size
- * DONE  Determine how to send lots of CBUS messages without filling TX buffers
- * DONE  Consider a delay action for sequences
- * DONE  Check handling of NERD is correct and produces correct ENRSP events.c
- * DONE  change the START_SOD_EVENT for a learned action/event
- * DONE  consumed event processing
- * DONE  validate NV changes
- * DONE  servo outputs
- * DONE  debounce inputs
- * DONE  invert inputs
- * DONE  invert outputs
- * DONE  multi-position outputs
- * DONE  Fix deleteAction events.c
- * DONE  Pulse outputs
- * DONE  Bounce algorithm for servos
- * DONE  Store output state in EEPROM + restore on powerup
- * DONE  add a max loop count for bounce calculations
- * DONE  Change doAction to properly check for global actions
- * DONE  Move SOD processing to doAction from processEvent
- * DONE  Fix the SOD processing to include mid events
- * DONE  remember output state in EEPROM outputs.c & servo.c
- * DONE  Need more config changes when changing type
- * DONE  NV change callback for type change
- * DONE  add needsStarting and completed for OUTPUT types so can be processed sequentially
- * DONE  sequence servos servo.c
- * DONE  Bootloader and handling of OPC_BOOT
- * DONE  Fix INVERTED for all types
- * DONE  Analogue inputs for magnetic and current sense detectors
- * 
- * 
- * FCU changes needed:
- * * The number of event slots used + number of free slots != total number of events
- * * Support for CMDERR(NO_EV) when doing REVAL
- * * Setting of one NV (type) can effect other NVs. Should read back all NVs after setting one
- * * Variable number of EVs per event up to the maximum
- * * Event action sequences
- * * A module can consume its own events
- * * A NN can be upto 65535 (suggestion)
- * * Depending upon decision on default events changes may be required
  */
 
 /**
- *	The Main CANMIO program supporting configurable I/O.
+ *	The Main CANCABDC
  */
 
 #include "devincs.h"
@@ -209,7 +142,8 @@ TickValue   lastLedPollTime;
 TickValue   lastAnaloguePollTime;
 static TickValue   lastPotentiometerPollTime;
 TickValue   startTime;
-static BOOL        started = FALSE;
+static BOOL        started;
+
 #define ANALOGUE_PORT 4
 
 #ifdef BOOTLOADER_PRESENT
@@ -229,24 +163,18 @@ void main(void) {
 #else
 int main(void) @0x800 {
 #endif
-    unsigned char rcon = RCON;
-    RCON=0xbf;
-    initRomOps();
+    initRomOps(); 
 #ifdef NV_CACHE
     // If we are using the cache make sure we get the NVs early in initialisation
     NV = loadNvCache(); // replace pointer with the cache
 #endif
     // Both LEDs off to start with during initialisation
     initStatusLeds();
+    TRISA=0x08;     // set up PB as input
+    initAnalogue(ANALOGUE_PORT);
 
-    startTime.Val = tickGet();
-    lastSwitchPollTime.Val = startTime.Val;
-    lastLedPollTime.Val = startTime.Val;
-    lastAnaloguePollTime.Val = startTime.Val;
-    lastPotentiometerPollTime.Val = startTime.Val;
-  
     // check if PB is held down during power up
-    if ( FLiM_SW) {
+    if ( ! FLiM_SW) {
         // test mode
 
         initTicker(0);  // set low priority
@@ -256,15 +184,13 @@ int main(void) @0x800 {
         WPUB = 0;
 
         // set the servo state and positions before configuring IO so we reduce the startup twitch
-        initAnalogue(ANALOGUE_PORT);
         initPotentiometer();
         initSwitches();
         initLeds();
             // Enable interrupt priority
         RCONbits.IPEN = 1;
         // enable interrupts, all init now done
-//!        ei(); // don't know why but enabling HP interrupt causes reset every 1 sec approx
-        INTCONbits.GIEL = 1;
+        ei(); 
     
         pollSwitches(0); // read the first column of 4 switches 
         if (switch_matrix[0]&0x02) {    // second button pressed
@@ -277,16 +203,24 @@ int main(void) @0x800 {
     }
     
     initialise(); 
+ 
+    started = FALSE;
+    
+    startTime.Val = tickGet();
+    lastSwitchPollTime.Val = startTime.Val;
+    lastLedPollTime.Val = startTime.Val;
+    lastAnaloguePollTime.Val = startTime.Val;
+    lastPotentiometerPollTime.Val = startTime.Val;
 
     while (TRUE) {
         // Startup delay for CBUS about 2 seconds to let other modules get powered up - ISR will be running so incoming packets processed
         if (!started && (tickTimeSince(startTime) > (NV->sendSodDelay * HUNDRED_MILI_SECOND) + TWO_SECOND)) {
             started = TRUE;
             if (NV->sendSodDelay > 0) {
-                sendProducedEvent(ACTION_PRODUCER_SOD, TRUE);
+                sendProducedEvent(HAPPENING_SOD, TRUE);
             }
         }
-//!        checkCBUS();    // Consume any CBUS message and act upon it
+        checkCBUS();    // Consume any CBUS message and act upon it
         FLiMSWCheck();  // Check FLiM switch for any mode changes
         
         if (started) {
@@ -294,10 +228,10 @@ int main(void) @0x800 {
                 pollAnalogue(ANALOGUE_PORT);
                 lastAnaloguePollTime.Val = tickGet();
             }
-//!            if (tickTimeSince(lastPotentiometerPollTime) > (19 * ONE_MILI_SECOND)) {
-//!                pollPotentiometer();
-//!                lastPotentiometerPollTime.Val = tickGet();
-//!            }
+            if (tickTimeSince(lastPotentiometerPollTime) > (19 * ONE_MILI_SECOND)) {
+                pollPotentiometer();
+                lastPotentiometerPollTime.Val = tickGet();
+            }
             if (tickTimeSince(lastSwitchPollTime) > (2 * ONE_MILI_SECOND)) {
                 pollSwitches(1);
                 lastSwitchPollTime.Val = tickGet();
@@ -307,6 +241,8 @@ int main(void) @0x800 {
                 lastLedPollTime.Val = tickGet();
             }
         }
+        // Check for any flashing status LEDs
+        checkFlashing();
      } // main loop
 } // main
  
@@ -315,8 +251,8 @@ int main(void) @0x800 {
  * The order of initialisation is important.
  */
 void initialise(void) {
-    // don't enable the 4x PLL. Will be done in CONFIG as using 4MHz clock
-    //OSCTUNEbits.PLLEN = 1; 
+    // enable the 4x PLL. 
+    OSCTUNEbits.PLLEN = 1; 
     
     // check if EEPROM is valid
    if (ee_read((WORD)EE_VERSION) != EEPROM_VERSION) {
@@ -353,7 +289,6 @@ void initialise(void) {
     cabdcFlimInit(); // This will call FLiMinit, which, in turn, calls eventsInit, cbusInit
     
     // set the servo state and positions before configuring IO so we reduce the startup twitch
-    initAnalogue(ANALOGUE_PORT);
     initPotentiometer();
     initSwitches();
     initLeds();
@@ -368,8 +303,7 @@ void initialise(void) {
     // Enable interrupt priority
     RCONbits.IPEN = 1;
     // enable interrupts, all init now done
-    //ei(); // don't know why but enabling HP interrupt causes reset every 1 sec approx
-    INTCONbits.GIEL = 1;
+    ei();
 }
 
 /**

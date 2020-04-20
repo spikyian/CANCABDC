@@ -70,7 +70,7 @@ void initLeds() {
     for (i=0; i<4; i++) {
         led_matrix[i] = 0;
     }
-    TRISC = 0x80;
+    TRISC = 0x80;   // RC7 is the CAN Rx
     LATB = 0xF0;    // LED drivers off
     TRISB = 0xf;    // upper 4 bits are outputs, lower 4 are inputs
     //Set up the MSSP to drive the switch matrix
