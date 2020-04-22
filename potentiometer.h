@@ -36,6 +36,7 @@ extern "C" {
     
     extern void initPotentiometer(void);
     extern void pollPotentiometer(void);
+    extern void setSpeed(unsigned char section, char speed);
 
 #ifdef	__cplusplus
 }

@@ -15,7 +15,7 @@ extern "C" {
 extern void initAnalogue(unsigned char port);
 extern void pollAnalogue(unsigned char port);
 
-extern WORD lastReading;
+extern unsigned char lastReading;
 
 
 #ifdef	__cplusplus

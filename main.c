@@ -141,6 +141,7 @@ TickValue   lastSwitchPollTime;
 TickValue   lastLedPollTime;
 TickValue   lastAnaloguePollTime;
 static TickValue   lastPotentiometerPollTime;
+static TickValue   lastSyncTime;
 TickValue   startTime;
 static BOOL        started;
 
@@ -211,6 +212,7 @@ int main(void) @0x800 {
     lastLedPollTime.Val = startTime.Val;
     lastAnaloguePollTime.Val = startTime.Val;
     lastPotentiometerPollTime.Val = startTime.Val;
+    lastSyncTime.Val = startTime.Val;
 
     while (TRUE) {
         // Startup delay for CBUS about 2 seconds to let other modules get powered up - ISR will be running so incoming packets processed
@@ -239,6 +241,11 @@ int main(void) @0x800 {
             if (tickTimeSince(lastLedPollTime) > (2 * ONE_MILI_SECOND)) {
                 pollLeds();
                 lastLedPollTime.Val = tickGet();
+            }
+            if ((NV->sync_tx > 0) && (tickTimeSince(lastSyncTime) > (100 * ONE_MILI_SECOND * NV_SYNC_TX))) {
+                cbusMsg[d0] = OPC_TON;
+                cbusSendMsg(ALL_CBUS, cbusMsg);     // send a sync 
+                lastSyncTime.Val = tickGet();
             }
         }
         // Check for any flashing status LEDs

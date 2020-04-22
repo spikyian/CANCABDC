@@ -34,7 +34,7 @@
 #include "nvCache.h"
 #include "analogue.h"
 
-int previousReading;
+unsigned char previousReading;
 char previousSpeed;
 
 // Forward declarations
@@ -52,6 +52,9 @@ void initPotentiometer() {
 int abs(int a) {
     return (a < 0) ? -a : a;
 }
+int sgn(int a) {
+    return (a < 0) ? -1 : 1; 
+}
 
 /**
  * Convert a reading to a speed value.
@@ -66,7 +69,7 @@ int abs(int a) {
  *                          |        /
  *                          B       |
  *                          |       |
- * -----------------A-------+-------A---------127---------> reading
+ * ---------0-------A-------+-------A---------255---------> reading
  *                  |       | 
  *                  |       B 
  *                 /        |
@@ -83,16 +86,19 @@ int abs(int a) {
  * @param reading (8 bit)
  * @return speed (8 bit -128 to +127)
  */
-char speed(int reading) {
-    reading >>= 4;
-    if (abs(reading) < NV->pot_dead_zone) return 0;
+char speed(unsigned char reading) {
+    int r = reading-128;
+    char sign;
+    if (abs(r) < NV->pot_dead_zone) return 0;
     
     // now the linear bit
+    sign = sgn(r);
     // (127-A)speed =  (reading-A)(C-B) + (127-A)B
-    reading -= NV->pot_dead_zone;
-    reading *= (NV->pot_end_level - NV->pot_start_level);
-    reading += (128 - NV->pot_dead_zone)*NV->pot_start_level;
-    return reading/(128-NV->pot_dead_zone);
+//    signedReading -= NV->pot_dead_zone;
+    r = abs(r) - NV->pot_dead_zone;
+    r *= (NV->pot_end_level - NV->pot_start_level);
+    r = NV->pot_start_level + r/(128 - NV->pot_dead_zone);
+    return sign*r;
 }
 
 /** 

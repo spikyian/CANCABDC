@@ -227,9 +227,12 @@ void switch_pressed(unsigned char sw, unsigned char state) {
 
 void requestControl(unsigned char section) {
     // Tell other panels we are taking control  
-    cbusMsg[d5] = NV->sections[section].section_nn_bytes.section_nn_h;
-    cbusMsg[d6] = NV->sections[section].section_nn_bytes.section_nn_l;
+    unsigned char nnl = NV->sections[section].section_nn_bytes.section_nn_l;
+    unsigned char nnh = NV->sections[section].section_nn_bytes.section_nn_h;
+    cbusMsg[d5] = nnh;
+    cbusMsg[d6] = nnl;
     cbusMsg[d7] = NV->sections[section].section_en_bytes.section_en_l;
+    if ((nnh == 0 ) && (nnl == 0)) return;
     if (getProducedEvent(HAPPENING_SECTION_CONTROL)) {
         // This should be a ASON3
         cbusSendEventWithData( CBUS_OVER_CAN, 0, producedEvent.EN, 1, cbusMsg, 3);
@@ -240,14 +243,18 @@ void requestControl(unsigned char section) {
 }
 
 void releaseControl(unsigned char section) {
+    unsigned char nnl = NV->sections[section].section_nn_bytes.section_nn_l;
+    unsigned char nnh = NV->sections[section].section_nn_bytes.section_nn_h;
+    if ((nnh == 0 ) && (nnl == 0)) return;
+    
     clearLed(sections[section].controlled_led);
     clearLed(sections[section].haveControl_led);
     if (NV->flags & NV_FLAG_STOP_ON_RELEASE) {
-//!        setSpeed(section, 0);
+        setSpeed(section, 0);
     }
     // Tell other panels we have released control  
-    cbusMsg[d5] = NV->sections[section].section_nn_bytes.section_nn_h;
-    cbusMsg[d6] = NV->sections[section].section_nn_bytes.section_nn_l;
+    cbusMsg[d5] = nnh;
+    cbusMsg[d6] = nnl;
     cbusMsg[d7] = NV->sections[section].section_en_bytes.section_en_l;
     if (getProducedEvent(HAPPENING_SECTION_CONTROL)) {
         // This should be a ASOF3

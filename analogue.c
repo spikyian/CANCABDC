@@ -39,16 +39,19 @@
 #include "romops.h"
 #include "potentiometer.h"
 
-WORD lastReading;
+unsigned char lastReading;
 
 void initAnalogue(unsigned char port) {
     ANCON0 = 1 << port; // make it an analogue port 
     ANCON1 = 0;
     TRISAbits.TRISA5 = 1;   // Input
+    
+    /* Single channel measurement mode */
         
     ADCON0 = (port << 2) | 0x01; // select the input channel and turn on ADC
-    ADCON1 = 0;
-    ADCON2 = 0x16;              // Acquisition 4 Tad cycles and Fosc/64
+    ADCON1 = 0;                 // Single channel measurement mode between AVss and AVcc
+    ADCON2 = 0x16;              // Acquisition 4 Tad cycles and Fosc/64. 
+                                // Left justified result so that 8 bit result is in ADRESH
 
     ADCON0bits.ADON = 1;      // turn on ADC module
     // start an ADC
@@ -63,7 +66,7 @@ void initAnalogue(unsigned char port) {
 
 void pollAnalogue(unsigned char port) {
     unsigned char io;
-    WORD adc;
+    unsigned char adc;
 
     // is conversion finished?
     if ( ! ADCON0bits.GO) {

@@ -62,7 +62,7 @@ extern "C" {
 #define NV_ACCELERATION                 5
 #define NV_FREQUENCY                    6
 #define NV_FLAGS                        7
-#define NV_SPARE1                       8
+#define NV_SYNC_TX                      8
 #define NV_SPARE2                       9
 #define NV_SPARE3                       10
 #define NV_SPARE4                       11
@@ -118,7 +118,8 @@ typedef struct {
         BYTE acceleration;              // 5
         BYTE frequency;                 // 6
         BYTE flags;                     // 7 flags
-        BYTE spare[8];
+        BYTE sync_tx;                   // 8
+        BYTE spare[7];
         NvSection sections[NUM_SECTIONS];                 // config for each IO
 } ModuleNvDefs;
 

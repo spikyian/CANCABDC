@@ -110,13 +110,14 @@ void factoryResetGlobalNv(void) {
     writeFlashByte((BYTE*)(AT_NV + NV_ACCELERATION), (BYTE)1);
     writeFlashByte((BYTE*)(AT_NV + NV_FREQUENCY), (BYTE)1);
     writeFlashByte((BYTE*)(AT_NV + NV_FLAGS), (BYTE)(NV_FLAG_MASTER_PANEL | NV_FLAG_STOP_ON_RELEASE | NV_FLAG_SWITCH_TOGGLE));
+    writeFlashByte((BYTE*)(AT_NV + NV_SYNC_TX), (BYTE)0);
     
     // Now reset the per section NVs
     for (i=0; i< NUM_SECTIONS; i++) {
         writeFlashByte((BYTE*)(AT_NV + NV_SECTION_NN_H(i)), (BYTE)0);
         writeFlashByte((BYTE*)(AT_NV + NV_SECTION_NN_L(i)), (BYTE)0);
         writeFlashByte((BYTE*)(AT_NV + NV_SECTION_EN_H(i)), (BYTE)0);
-        writeFlashByte((BYTE*)(AT_NV + NV_SECTION_EN_L(i)), (BYTE)((i%4)+1));
+        writeFlashByte((BYTE*)(AT_NV + NV_SECTION_EN_L(i)), (BYTE)(i%4));   // CAN4DC uses EN 0-3
     }
 
 #ifdef NV_CACHE
