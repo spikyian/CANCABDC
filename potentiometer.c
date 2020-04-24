@@ -123,7 +123,7 @@ void setAllSpeed(char speed) {
     unsigned char i;
     
     for (i=0; i<NUM_SECTIONS; i++) {
-        if (testLed(sections[i].haveControl_led)) {
+        if (testLed(sections[i].ourControl_led)) {
             setSpeed(i, speed);
         }
     }

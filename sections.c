@@ -165,8 +165,8 @@ void initSections(void) {
     for (i=0; i<NUM_SECTIONS; i++){
         sections[i].request_switch = i;
         sections[i].release_switch = (i+16);
-        sections[i].controlled_led = i+(i/8)*8;
-        sections[i].haveControl_led = 8+i+(i/8)*8;
+        sections[i].otherControlled_led = i+(i/8)*8;
+        sections[i].ourControl_led = 8+i+(i/8)*8;
         switch2Section[sections[i].request_switch] = i;
         switch2Section[sections[i].release_switch] = i;
     }
@@ -193,10 +193,10 @@ void switch_pressed(unsigned char sw, unsigned char state) {
     if (section >= NUM_SECTIONS) return;
     if (sw == sections[section].request_switch) {
         if (NV->flags & NV_FLAG_SWITCH_TOGGLE) {
-            if (haveControl(section)) {
+            if (isOurControlled(section)) {
                 releaseControl(section);
             } else {
-                if (isControlled(section)) {
+                if (isOtherControlled(section)) {
                     if (NV->flags & NV_FLAG_MASTER_PANEL) {
                         requestControl(section);
                     }
@@ -205,13 +205,17 @@ void switch_pressed(unsigned char sw, unsigned char state) {
                 }
             }
         } else {
-            if (isControlled(section)) {
-                // if someone already has control then we need Master_Panel permission
-                if (NV->flags & NV_FLAG_MASTER_PANEL) {
+            if (isOurControlled(section)) {
+                // already have control
+            } else {
+                if (isOtherControlled(section)) {
+                    // if someone already has control then we need Master_Panel permission
+                    if (NV->flags & NV_FLAG_MASTER_PANEL) {
+                        requestControl(section);
+                    }
+                } else {
                     requestControl(section);
                 }
-            } else {
-                requestControl(section);
             }
         }
         return;
@@ -219,7 +223,11 @@ void switch_pressed(unsigned char sw, unsigned char state) {
         if (NV->flags & NV_FLAG_SWITCH_TOGGLE) {
             // in toggle mode ignore the release switch
         } else {
-            releaseControl(section);
+            if (isOurControlled(section)) {
+                releaseControl(section);
+            } else {
+                // ignore
+            }
         }
         return;
     }
@@ -238,8 +246,8 @@ void requestControl(unsigned char section) {
         cbusSendEventWithData( CBUS_OVER_CAN, 0, producedEvent.EN, 1, cbusMsg, 3);
     }
     
-    setLed(sections[section].controlled_led);
-    setLed(sections[section].haveControl_led);
+    clearLed(sections[section].otherControlled_led);
+    setLed(sections[section].ourControl_led);
 }
 
 void releaseControl(unsigned char section) {
@@ -247,8 +255,8 @@ void releaseControl(unsigned char section) {
     unsigned char nnh = NV->sections[section].section_nn_bytes.section_nn_h;
     if ((nnh == 0 ) && (nnl == 0)) return;
     
-    clearLed(sections[section].controlled_led);
-    clearLed(sections[section].haveControl_led);
+    clearLed(sections[section].otherControlled_led);
+    clearLed(sections[section].ourControl_led);
     if (NV->flags & NV_FLAG_STOP_ON_RELEASE) {
         setSpeed(section, 0);
     }
@@ -262,23 +270,23 @@ void releaseControl(unsigned char section) {
     }
 }
 
-unsigned char haveControl(unsigned char section) {
-    return testLed(sections[section].haveControl_led);
+unsigned char isOurControlled(unsigned char section) {
+    return testLed(sections[section].ourControl_led);
 }
 
-unsigned char isControlled(unsigned char section) {
-    return testLed(sections[section].controlled_led);
+unsigned char isOtherControlled(unsigned char section) {
+    return testLed(sections[section].otherControlled_led    );
 }
 
 
-void gotControlledMessage(unsigned char section) {
+void gotOtherControlledMessage(unsigned char section) {
     // we didn't send the message so another panel has control
-    setLed(sections[section].controlled_led);
-    clearLed(sections[section].haveControl_led);
+    setLed(sections[section].otherControlled_led);
+    clearLed(sections[section].ourControl_led);
 }
-void lostControlledMessage(unsigned char section) {
-    clearLed(sections[section].controlled_led);
-    clearLed(sections[section].haveControl_led);
+void lostOtherControlledMessage(unsigned char section) {
+    clearLed(sections[section].otherControlled_led);
+    clearLed(sections[section].ourControl_led);
 }
 
 void receivedControlMessage(unsigned char * rx_ptr) {
@@ -300,10 +308,10 @@ void receivedControlMessage(unsigned char * rx_ptr) {
         // It is for one of the sections we are managing
         if (opc&1) {
             // OFF event
-            lostControlledMessage(section);
+            lostOtherControlledMessage(section);
         } else {
             // ON event
-            gotControlledMessage(section);
+            gotOtherControlledMessage(section);
         }
     }
 }

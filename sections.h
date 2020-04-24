@@ -40,8 +40,8 @@ extern "C" {
 struct Section {
     unsigned char request_switch;
     unsigned char release_switch;
-    unsigned char haveControl_led;
-    unsigned char controlled_led;
+    unsigned char ourControl_led;
+    unsigned char otherControlled_led;
 };
 typedef struct Section Section;
 
@@ -52,8 +52,8 @@ extern void switch_pressed(unsigned char sw, unsigned char state);
 extern void requestControl(unsigned char section);
 extern void releaseControl(unsigned char section);
 extern void receivedControlMessage(unsigned char * rx_ptr);
-extern unsigned char haveControl(unsigned char section);
-extern unsigned char isControlled(unsigned char section);
+extern unsigned char isOurControlled(unsigned char section);
+extern unsigned char isOtherControlled(unsigned char section);
 
 #ifdef	__cplusplus
 }

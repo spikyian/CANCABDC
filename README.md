@@ -1,7 +1,7 @@
 # CANCABDC
 Firmware for a cab control panel for a DC layout.
 
-##Introduction
+## Introduction
 
 A panel supporting one controller and up to 16 DC sections. 
 Multiple CANCABDCs may be used to control a layout. 

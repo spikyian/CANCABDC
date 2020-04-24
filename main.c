@@ -242,7 +242,7 @@ int main(void) @0x800 {
                 pollLeds();
                 lastLedPollTime.Val = tickGet();
             }
-            if ((NV->sync_tx > 0) && (tickTimeSince(lastSyncTime) > (100 * ONE_MILI_SECOND * NV_SYNC_TX))) {
+            if ((NV->sync_tx > 0) && (tickTimeSince(lastSyncTime) > (100 * ONE_MILI_SECOND * NV->sync_tx))) {
                 cbusMsg[d0] = OPC_TON;
                 cbusSendMsg(ALL_CBUS, cbusMsg);     // send a sync 
                 lastSyncTime.Val = tickGet();
