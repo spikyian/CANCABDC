@@ -15,6 +15,7 @@ extern "C" {
     #define NUM_SWITCHES 32
     extern void initSwitches(void);
     extern void pollSwitches(unsigned char callback);
+    extern unsigned char getSwitchState(unsigned char sw);
     
     extern unsigned char switch_matrix[8];
 

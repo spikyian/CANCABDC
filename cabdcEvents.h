@@ -67,7 +67,7 @@ extern "C" {
 #define NUM_HAPPENINGS    2
 #define HAPPENING_BASE    1
     
-#define DEFAULT_SECTION_EN  0xEA01
+#define DEFAULT_SECTION_EN  0xDCAB
 /* CONSUMED actions */
     // Global consumed actions first
 

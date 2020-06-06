@@ -39,7 +39,7 @@ extern "C" {
     
 struct Section {
     unsigned char request_switch;
-    unsigned char release_switch;
+    unsigned char direction_switch;
     unsigned char ourControl_led;
     unsigned char otherControlled_led;
 };

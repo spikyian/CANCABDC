@@ -33,6 +33,7 @@
 #include "cabdcNv.h"
 #include "nvCache.h"
 #include "analogue.h"
+#include "switches.h"
 
 unsigned char previousReading;
 char previousSpeed;
@@ -124,7 +125,11 @@ void setAllSpeed(char speed) {
     
     for (i=0; i<NUM_SECTIONS; i++) {
         if (testLed(sections[i].ourControl_led)) {
-            setSpeed(i, speed);
+            if (getSwitchState(sections[i].direction_switch)) {
+                setSpeed(i, -speed);
+            } else {
+                setSpeed(i, speed);
+            }
         }
     }
 }

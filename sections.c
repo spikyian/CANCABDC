@@ -164,11 +164,11 @@ void initSections(void) {
     // fill in the switch2Section lookup table
     for (i=0; i<NUM_SECTIONS; i++){
         sections[i].request_switch = i;
-        sections[i].release_switch = (i+16);
+        sections[i].direction_switch = (i+16);
         sections[i].otherControlled_led = i+(i/8)*8;
         sections[i].ourControl_led = 8+i+(i/8)*8;
         switch2Section[sections[i].request_switch] = i;
-        switch2Section[sections[i].release_switch] = i;
+        switch2Section[sections[i].direction_switch] = i;
     }
 }
 
@@ -192,41 +192,15 @@ void switch_pressed(unsigned char sw, unsigned char state) {
     section=switch2Section[sw];
     if (section >= NUM_SECTIONS) return;
     if (sw == sections[section].request_switch) {
-        if (NV->flags & NV_FLAG_SWITCH_TOGGLE) {
-            if (isOurControlled(section)) {
-                releaseControl(section);
-            } else {
-                if (isOtherControlled(section)) {
-                    if (NV->flags & NV_FLAG_MASTER_PANEL) {
-                        requestControl(section);
-                    }
-                } else {
+        if (isOurControlled(section)) {
+            releaseControl(section);
+        } else {
+            if (isOtherControlled(section)) {
+                if (NV->flags & NV_FLAG_MASTER_PANEL) {
                     requestControl(section);
                 }
-            }
-        } else {
-            if (isOurControlled(section)) {
-                // already have control
             } else {
-                if (isOtherControlled(section)) {
-                    // if someone already has control then we need Master_Panel permission
-                    if (NV->flags & NV_FLAG_MASTER_PANEL) {
-                        requestControl(section);
-                    }
-                } else {
-                    requestControl(section);
-                }
-            }
-        }
-        return;
-    } else if (sw == sections[section].release_switch) {
-        if (NV->flags & NV_FLAG_SWITCH_TOGGLE) {
-            // in toggle mode ignore the release switch
-        } else {
-            if (isOurControlled(section)) {
-                releaseControl(section);
-            } else {
-                // ignore
+                requestControl(section);
             }
         }
         return;

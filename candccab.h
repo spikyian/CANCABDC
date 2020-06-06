@@ -65,14 +65,14 @@ extern "C" {
  * Module parameters
  */ 
 #define MAJOR_VER 	1
-#define MINOR_VER 	'a'        // Minor version character
+#define MINOR_VER 	'b'        // Minor version character
 #define BETA        1
 
 #include "GenericTypeDefs.h"
-#include "cbusdefs8q.h"
+#include "cbusdefs8r.h"
 
 #define MANU_ID         MANU_MERG
-#define MODULE_ID       MTYP_CANCAB // XXX
+#define MODULE_ID       MTYP_CANCABDC 
 #define MODULE_TYPE     "CABDC  "       // MUST be at least 7 character long. First 7 are used.
 #define MODULE_FLAGS    PF_COMBI+PF_BOOT+PF_COE  // Producer, consumer, boot
 #define BUS_TYPE        PB_CAN

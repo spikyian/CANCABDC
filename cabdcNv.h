@@ -91,7 +91,6 @@ extern "C" {
 // Flags
 #define NV_FLAG_MASTER_PANEL        1   // if set then we can forceably take control
 #define NV_FLAG_STOP_ON_RELEASE     2   // if set then send a stop when releasing
-#define NV_FLAG_SWITCH_TOGGLE       4   // if set then only one switch per section
     
 
 typedef struct {

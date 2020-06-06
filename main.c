@@ -39,6 +39,10 @@
  */
 /** TODOs
  * Work out what to do if all CANIDs are taken can18.c
+ * Change the switches for the test routines
+ * Add proper Module Id
+ * Add COE condition into library
+ * Allow ASON/ASOF to control our controls
  */
 
 /**

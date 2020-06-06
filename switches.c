@@ -104,3 +104,12 @@ void pollSwitches(unsigned char callback) {
     scan_column &=0x7;
     LATA = scan_column;
 }
+
+/**
+ * return the state of the switch. Does not do any debounce.
+ * @param sw switch number
+ * @return switch state
+ */
+unsigned char getSwitchState(unsigned char sw) {
+    return switch_matrix[sw & 7] & (1 << (sw/8));
+}
