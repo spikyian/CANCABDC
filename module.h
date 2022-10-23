@@ -82,7 +82,7 @@ extern "C" {
  * EVENTS
  */
 #include "cabdcEvents.h"
-    
+#define APP_addEvent addEvent
 
 /*
  * FLASH bounds

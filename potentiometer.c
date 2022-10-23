@@ -140,6 +140,7 @@ void setAllSpeed(char speed) {
  * @param speed
  */
 void setSpeed(unsigned char section, char speed) {
+    unsigned short nn, en;
     cbusMsg[d5] = speed;
     cbusMsg[d6] = NV->acceleration;
     if (NV->frequency) {
@@ -151,10 +152,13 @@ void setSpeed(unsigned char section, char speed) {
 
     if ((NV->sections[section].section_nn_bytes.section_nn_h != 0) || (NV->sections[section].section_nn_bytes.section_nn_l != 0)) {
         // This should be a ACON3
-        cbusSendEventWithData( CBUS_OVER_CAN, 
-                (NV->sections[section].section_nn_bytes.section_nn_h << 8) | NV->sections[section].section_nn_bytes.section_nn_l, 
-                (NV->sections[section].section_en_bytes.section_en_h << 8) | NV->sections[section].section_en_bytes.section_en_l, 
-                1, cbusMsg, 3);
+        nn = NV->sections[section].section_nn_bytes.section_nn_h;
+        nn <<= 8;
+        nn |= NV->sections[section].section_nn_bytes.section_nn_l;
+        en = NV->sections[section].section_en_bytes.section_en_h;
+        en <<= 8;
+        en |= NV->sections[section].section_en_bytes.section_en_l;
+        cbusSendEventWithData( CBUS_OVER_CAN, nn, en, 1, cbusMsg, 3);
     }
 }
 

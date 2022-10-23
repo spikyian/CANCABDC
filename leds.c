@@ -21,7 +21,7 @@
 **************************************************************************************************************
 */ 
 /* 
- * File:   switches.c
+ * File:   leds.c
  * Author: Ian
  * 
  * Handle a CANPAN led matrix.
@@ -76,7 +76,6 @@ void initLeds() {
     //Set up the MSSP to drive the switch matrix
     SSPCON1 = 0x22; // Enable Master and clock for Fosc/64
     SSPSTATbits.CKE = 1;
-    //Set up the IO ports to be able to read the switch matrix
 }
 
 /**
@@ -96,12 +95,16 @@ void pollLeds() {
     dummy = SSPBUF; // dummy read needed before next write
     //SSPCON1bits.WCOL = 0;
     cathodes = led_matrix[current_row];
+    SSPCON1 = 0x22;
+    PIR1bits.SSPIF = 0; // clear the flag ready for next time
     SSPBUF = cathodes;
     
 //    // wait for data to be sent
+    // This takes quite a bit of time but we have to ensure the cathodes have the
+    // right data before turning on the anodes otherwise we don't get a clean display.
     while (PIR1bits.SSPIF == 0)
         ;
-//    PIR1bits.SSPIF = 0; // clear the flag ready for next time
+
     // latch the data
     LATCbits.LATC4 = 1; //LE
     LATCbits.LATC4 = 0; //LE

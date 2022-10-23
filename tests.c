@@ -35,6 +35,7 @@
 #include "switches.h"
 #include "leds.h"
 #include "analogue.h"
+#include "statusLeds.h"
 
 extern TickValue startTime;
 extern TickValue lastSwitchPollTime;
@@ -67,29 +68,36 @@ void test1(void) {
     testTime.Val = startTime.Val;
         
     while (TRUE) {
-        if (tickTimeSince(testTime) > (ONE_SECOND)) {
-            unsigned char i;
+        unsigned char i;
 
-            if (testStep >= TEST_SWITCHES) {    
-                // just copy switches to leds
+        if (testStep >= TEST_SWITCHES) {    
+            // just copy switches to leds
+            for (i=0; i<4; i++) {
+                led_matrix[i] = (switch_matrix[2*i] & 0xF) | (switch_matrix[2*i+1]<<4);
+            }
+        } 
+        if (tickTimeSince(testTime) > (ONE_SECOND)) {
+            if ((testStep >= TEST_COL1) && (testStep <= TEST_COL4)) {
+                // illuminate the cols in turn
                 for (i=0; i<4; i++) {
-                    led_matrix[i] = (switch_matrix[2*i] & 0xF) | (switch_matrix[2*i+1]<<4);
+                    if (i == (testStep-TEST_COL1)) {
+                        led_matrix[i] = 0xff;
+                    } else {
+                        led_matrix[i] = 0;
+                    }
                 }
-            } else if ((testStep >= TEST_COL1) && (testStep <= TEST_COL4)) {
+                
+            } 
+            if ((testStep >= TEST_ROW1) && (testStep <= TEST_ROW8)) {
+                // illuminate the rows in turn
                 for (i=0; i<4; i++) {
-                    led_matrix[i] = 0;
-                }
-                led_matrix[testStep-TEST_COL1] = 0xff;
-            } else {
-                for (i=0; i<4; i++) {
-                    led_matrix[i] = 1 << (testStep - TEST_ROW1);
+                    led_matrix[i] = (1 << (testStep - TEST_ROW1));
                 }
             }
             testStep++;
             testTime.Val = tickGet();
             if (testStep >= TEST_REPEAT) {  // restart the tests
                 testStep = TEST_COL1;
-                testTime.Val = startTime.Val;
             }
         }
         if (tickTimeSince(lastSwitchPollTime) > (2 * ONE_MILI_SECOND)) {
@@ -100,6 +108,7 @@ void test1(void) {
             pollLeds();
             lastLedPollTime.Val = tickGet();
         }
+        checkFlashing();
     }        
 }
 
@@ -123,6 +132,7 @@ void test2(void) {
             pollLeds();
             lastLedPollTime.Val = tickGet();
         }
+        checkFlashing();
     }        
 }
 
@@ -151,6 +161,7 @@ void test3(void) {
             pollLeds();
             lastLedPollTime.Val = tickGet();
         }
+        checkFlashing();
     }
 }
 

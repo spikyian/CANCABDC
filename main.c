@@ -147,7 +147,8 @@ TickValue   lastAnaloguePollTime;
 static TickValue   lastPotentiometerPollTime;
 static TickValue   lastSyncTime;
 TickValue   startTime;
-static BOOL        started;
+static BOOL started;
+static BOOL canInitialised;
 
 #define ANALOGUE_PORT 4
 
@@ -156,6 +157,21 @@ static BOOL        started;
 #pragma romdata BOOTFLAG
 rom BYTE eeBootFlag = 0;
 #endif
+
+#define TEST_COL1       1
+#define TEST_COL2       2
+#define TEST_COL3       3
+#define TEST_COL4       4
+#define TEST_ROW1       5
+#define TEST_ROW2       6
+#define TEST_ROW3       7
+#define TEST_ROW4       8    
+#define TEST_ROW5       9    
+#define TEST_ROW6       10    
+#define TEST_ROW7       11   
+#define TEST_ROW8       12
+#define TEST_SWITCHES   13
+#define TEST_REPEAT     24 
 
 // MAIN APPLICATION
 #pragma code
@@ -168,45 +184,59 @@ void main(void) {
 #else
 int main(void) @0x800 {
 #endif
+    unsigned char i;
+    canInitialised = FALSE;
     initRomOps(); 
 #ifdef NV_CACHE
     // If we are using the cache make sure we get the NVs early in initialisation
     NV = loadNvCache(); // replace pointer with the cache
 #endif
+    // enable the 4x PLL. 
+    OSCTUNEbits.PLLEN = 1; 
+    /*
+     * Now configure the interrupts.
+     * Interrupt priority is enabled with the Low priority interrupt used for CAN and tick timer.
+     */
+    // Enable interrupt priority, clear CM, clear RESET, clear WDT, clear TO, clear POR, clear BOR
+    RCON =0xBF;
+    
     // Both LEDs off to start with during initialisation
     initStatusLeds();
     TRISA=0x08;     // set up PB as input
     initAnalogue(ANALOGUE_PORT);
-
+    
     // check if PB is held down during power up
-    if ( ! FLiM_SW) {
-        // test mode
-
+    if ( ! FLiM_SW) 
+    {
         initTicker(0);  // set low priority
         // Disable PORT B weak pullups
-        INTCON2 = 0;
+        INTCON2bits.RBPU = 1;
         // Disable weak pullups
         WPUB = 0;
 
-        // set the servo state and positions before configuring IO so we reduce the startup twitch
         initPotentiometer();
         initSwitches();
         initLeds();
-            // Enable interrupt priority
-        RCONbits.IPEN = 1;
-        // enable interrupts, all init now done
-        ei(); 
-    
-        pollSwitches(0); // read the first column of 4 switches 
-        if (switch_matrix[0]&0x02) {    // second button pressed
+
+        // all init now done, enable interrupts
+        ei();
+        startTime.Val = tickGet();
+
+        for (i=0; i<8; i++) {
+            pollSwitches(0); // read col  switches
+        }
+        
+        startFLiMFlash(TRUE);   // fast flashing to indicate self test
+        
+        if (switch_matrix[1]) {    // first switch on or first button
             test2();
         }
-        if (switch_matrix[0]&0x04) {    // third button pressed
+        if (switch_matrix[2]) {    // second switch on
             test3();
         }
         test1();
     }
-    
+   
     initialise(); 
  
     started = FALSE;
@@ -256,14 +286,12 @@ int main(void) @0x800 {
         checkFlashing();
      } // main loop
 } // main
- 
+
 
 /**
  * The order of initialisation is important.
  */
 void initialise(void) {
-    // enable the 4x PLL. 
-    OSCTUNEbits.PLLEN = 1; 
     
     // check if EEPROM is valid
    if (ee_read((WORD)EE_VERSION) != EEPROM_VERSION) {
@@ -292,12 +320,13 @@ void initialise(void) {
     }
     initTicker(0);  // set low priority
     // Disable PORT B weak pullups
-    INTCON2 = 0;
+    INTCON2bits.RBPU = 1;
     // Disable weak pullups
     WPUB = 0;
 
     cabdcEventsInit();
     cabdcFlimInit(); // This will call FLiMinit, which, in turn, calls eventsInit, cbusInit
+    canInitialised = TRUE;
     
     // set the servo state and positions before configuring IO so we reduce the startup twitch
     initPotentiometer();
@@ -305,15 +334,8 @@ void initialise(void) {
     initLeds();
     initSections();
 
-    /*
-     * Now configure the interrupts.
-     * Interrupt priority is enabled with the High priority interrupt used for
-     * the servo timers and Low priority interrupt used for CAN and tick timer.
-     */
     
-    // Enable interrupt priority
-    RCONbits.IPEN = 1;
-    // enable interrupts, all init now done
+    // all init now done, enable interrupts
     ei();
 }
 
@@ -414,9 +436,11 @@ void ISRLow(void) {
     void __ISR(_EXTERNAL_1_VECTOR, ipl4) _INT1Interrupt(void)
 #else
     void interrupt low_priority low_isr(void) {
-#endif
+#endif    
     tickISR();
-    canInterruptHandler();
+    if (canInitialised) {
+        canInterruptHandler();
+    }
 }
 
 // Interrupt service routines
@@ -431,6 +455,6 @@ void ISRHigh(void) {
 #else 
     void interrupt high_priority high_isr (void) {
 #endif
-
+        
 }
 

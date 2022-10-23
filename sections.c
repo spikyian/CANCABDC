@@ -26,6 +26,7 @@
 #include "cabdcNv.h"
 #include "candccab.h"
 #include "cbus.h"
+#include "happeningsActions.h"
 
 #include "leds.h"
 #include "sections.h"

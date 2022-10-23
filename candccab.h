@@ -65,11 +65,11 @@ extern "C" {
  * Module parameters
  */ 
 #define MAJOR_VER 	1
-#define MINOR_VER 	'b'        // Minor version character
+#define MINOR_VER 	'c'        // Minor version character
 #define BETA        1
 
 #include "GenericTypeDefs.h"
-#include "cbusdefs8r.h"
+#include "cbusdefs.h"
 
 #define MANU_ID         MANU_MERG
 #define MODULE_ID       MTYP_CANCABDC 
